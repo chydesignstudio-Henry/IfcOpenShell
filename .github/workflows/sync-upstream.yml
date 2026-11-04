@@ -1,0 +1,341 @@
+# This file was generated with the assistance of an AI coding tool.
+#
+# Keep this fork's default branch aligned with the same-named branch on
+# IfcOpenShell/IfcOpenShell.
+#
+# The update goes through GitHub's merge-upstream API (the same merge used by
+# `gh repo sync` before that command's non-fast-forward fallback). There is no
+# `git push --force` and no git-ref reset. A content conflict leaves the
+# branch as it is, fails this job, and opens or updates an issue when Issues
+# are enabled.
+#
+# GITHUB_TOKEN cannot create or modify files under .github/workflows. When
+# upstream commits touch those files, merge-upstream returns HTTP 422. This
+# job then merges locally, keeps this fork's .github/workflows tree (including
+# this workflow), and pushes that merge with GITHUB_TOKEN. A personal access
+# token is not used: a push authenticated as a user would start the upstream
+# build and publish workflows.
+#
+# push and pull_request are intentionally absent. GitHub does not start other
+# workflows from GITHUB_TOKEN.
+
+name: Sync fork with upstream
+
+on:
+  schedule:
+    # 03:00 Asia/Taipei (UTC+8) is 19:00 UTC. GitHub may start the cron late.
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: sync-upstream-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'chydesignstudio-Henry/IfcOpenShell'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Merge the matching upstream branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PROMPT_DISABLED: "1"
+          GIT_TERMINAL_PROMPT: "0"
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_REPO: chydesignstudio-Henry/IfcOpenShell
+          EXPECTED_PARENT: IfcOpenShell/IfcOpenShell
+        run: |
+          # shellcheck shell=bash
+          set -euo pipefail
+
+          if [[ "${GH_REPO}" != "${EXPECTED_REPO}" ]]; then
+            echo "::error::Refusing to sync ${GH_REPO}."
+            exit 1
+          fi
+
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+
+          write_summary() {
+            local result="$1"
+            local extra="${2:-}"
+            if [[ -z "${GITHUB_STEP_SUMMARY:-}" ]]; then
+              return 0
+            fi
+            {
+              echo "## 上游同步"
+              echo
+              echo "- 結果：${result}"
+              echo "- 分叉：\`${GH_REPO}\` 預設分支 \`${default_branch:-}\`"
+              echo "- 上游：\`${parent:-}\` 分支 \`${upstream_branch:-}\`"
+              echo "- 上游倉庫的預設分支：\`${parent_default:-}\`"
+              echo "- 同步對象是與分叉預設分支同名的上游分支，不是另外猜一條分支。"
+              if [[ -n "${fork_sha:-}" ]]; then
+                echo "- 同步前分叉 SHA：\`${fork_sha}\`"
+              fi
+              if [[ -n "${upstream_sha:-}" ]]; then
+                echo "- 上游 SHA：\`${upstream_sha}\`"
+              fi
+              if [[ -n "${after_sha:-}" ]]; then
+                echo "- 同步後分叉 SHA：\`${after_sha}\`"
+              fi
+              if [[ -n "${fork_only:-}" || -n "${upstream_only:-}" ]]; then
+                echo "- 同步前：上游領先 ${upstream_only:-?} 個提交，分叉另有 ${fork_only:-?} 個提交"
+              fi
+              if [[ -n "$extra" ]]; then
+                echo
+                echo '```'
+                printf '%s\n' "$extra"
+                echo '```'
+              fi
+            } >> "${GITHUB_STEP_SUMMARY}"
+          }
+
+          fail() {
+            local summary_line="$1"
+            local detail="${2:-}"
+            echo "::error::${summary_line}"
+            echo "${summary_line}"
+            if [[ -n "$detail" ]]; then
+              printf '%s\n' "$detail"
+            fi
+            write_summary "失敗：${summary_line}" "$detail"
+            exit 1
+          }
+
+          create_conflict_issue() {
+            local detail="$1"
+            local title="上游同步衝突：${default_branch} 無法與上游合併"
+            local run_url="${GITHUB_SERVER_URL}/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}"
+            printf '%s\n' "$detail" > "${tmp}/detail.txt"
+            if ! OUT="${tmp}/issue.md" \
+              FORK_REPO="${GH_REPO}" \
+              DEFAULT_BRANCH="${default_branch}" \
+              PARENT_REPO="${parent}" \
+              UPSTREAM_BRANCH="${upstream_branch}" \
+              RUN_URL="${run_url}" \
+              DETAIL_FILE="${tmp}/detail.txt" \
+              python3 - <<'PY'
+          import os
+          import pathlib
+          detail = pathlib.Path(os.environ["DETAIL_FILE"]).read_text()
+          fence = "````" if "```" in detail else "```"
+          text = f"""每日上游同步無法完成，因為合併發生衝突。分支沒有被 force-push，分叉自己新增的檔案也沒有被刪除。
+
+          - 分叉：`{os.environ["FORK_REPO"]}`
+          - 分叉預設分支：`{os.environ["DEFAULT_BRANCH"]}`
+          - 上游：`{os.environ["PARENT_REPO"]}`
+          - 上游分支：`{os.environ["UPSTREAM_BRANCH"]}`（與分叉預設分支同名；`merge-upstream` 合併的就是這條分支）
+          - 執行紀錄：{os.environ["RUN_URL"]}
+
+          請在本地把上游分支合併進來、解決衝突後，用一般推送更新預設分支。不要使用 `git push --force`。
+
+          ```bash
+          git fetch https://github.com/{os.environ["PARENT_REPO"]}.git {os.environ["UPSTREAM_BRANCH"]}
+          git checkout {os.environ["DEFAULT_BRANCH"]}
+          git merge FETCH_HEAD
+          git push origin {os.environ["DEFAULT_BRANCH"]}
+          ```
+
+          API 回應：
+
+          {fence}
+          {detail}
+          {fence}
+          """
+          pathlib.Path(os.environ["OUT"]).write_text(text)
+          PY
+            then
+              echo "無法產生 issue 內文。"
+              return 1
+            fi
+
+            if ! gh issue list --repo "${GH_REPO}" --state open --limit 100 --json number,title > "${tmp}/issues.json" 2>"${tmp}/issue-list.err"; then
+              echo "無法讀取 issues："
+              cat "${tmp}/issue-list.err"
+              return 1
+            fi
+            existing=$(python3 -c 'import json,sys; items=json.load(open(sys.argv[1])); print(next((str(i["number"]) for i in items if str(i.get("title") or "").startswith("上游同步衝突：")), ""))' "${tmp}/issues.json")
+            if [[ -n "${existing}" ]]; then
+              if ! gh issue comment "${existing}" --repo "${GH_REPO}" --body-file "${tmp}/issue.md"; then
+                return 1
+              fi
+              echo "已在既有 issue #${existing} 留言。"
+              return 0
+            fi
+            if ! gh issue create --repo "${GH_REPO}" --title "${title}" --body-file "${tmp}/issue.md"; then
+              return 1
+            fi
+            echo "已建立衝突 issue。"
+          }
+
+          sync_keeping_workflows() {
+            # Called only after merge-upstream has left the branch untouched.
+            # The pushed merge keeps this fork's .github/workflows tree so
+            # GITHUB_TOKEN is allowed to update the branch.
+            echo "Merging locally and keeping this fork's .github/workflows tree."
+            gh repo clone "https://github.com/${GH_REPO}.git" "${tmp}/repo" --no-upstream -- --single-branch --branch "${default_branch}"
+            git -C "${tmp}/repo" remote add upstream "https://github.com/${parent}.git"
+            git -C "${tmp}/repo" fetch --no-tags upstream "${upstream_branch}"
+            fetched=$(git -C "${tmp}/repo" rev-parse FETCH_HEAD)
+            if [[ "${fetched}" != "${upstream_sha}" ]]; then
+              fail "抓下來的上游提交與 API 不一致，已停止。"
+            fi
+            pushd "${tmp}/repo" >/dev/null
+            set +e
+            git merge --no-commit --no-ff FETCH_HEAD
+            local_merge=$?
+            set -e
+            if [[ "${local_merge}" -ne 0 ]]; then
+              conflicts=$(git diff --name-only --diff-filter=U || true)
+              non_workflow=$(printf '%s\n' "${conflicts}" | grep -v '^\.github/workflows/' | sed '/^$/d' || true)
+              if [[ -z "${conflicts}" || -n "${non_workflow}" ]]; then
+                git merge --abort || true
+                popd >/dev/null
+                if [[ -n "${non_workflow}" ]]; then
+                  on_conflict "$(printf '這些路徑發生衝突，分支沒有推送：\n%s\n' "${non_workflow}")"
+                fi
+                fail "本地合併失敗，分支沒有推送。"
+              fi
+            fi
+            skipped=$(git diff --name-only HEAD -- .github/workflows || true)
+            # Put .github/workflows back to this fork's tree, including files
+            # the merge added. This stays in the local clone; nothing is force-pushed.
+            git restore --source=HEAD --staged --worktree -- .github/workflows
+            if [[ -n "$(git diff --name-only --diff-filter=U)" ]]; then
+              remaining=$(git diff --name-only --diff-filter=U)
+              git merge --abort || true
+              popd >/dev/null
+              on_conflict "$(printf '仍有未解決的衝突，分支沒有推送：\n%s\n' "${remaining}")"
+            fi
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit \
+              -m "Merge upstream into the fork" \
+              -m "Keep .github/workflows from this fork so GITHUB_TOKEN can push without editing workflow files." \
+              -m "Generated with the assistance of an AI coding tool."
+            popd >/dev/null
+            gh auth setup-git
+            if ! git -C "${tmp}/repo" push origin "HEAD:${default_branch}" 2>"${tmp}/push.err"; then
+              fail "推送被拒絕，沒有 force-push。" "$(cat "${tmp}/push.err")"
+            fi
+            merge_type="merge-keep-workflows"
+            workflow_note="已合併上游的程式與文件。.github/workflows 維持分叉現況，因為 GITHUB_TOKEN 不能修改 workflow 檔，這次推送也不會啟動其他 workflow。"
+            if [[ -n "${skipped}" ]]; then
+              workflow_note="${workflow_note}"$'\n'"這次沒有帶入的 workflow 路徑："$'\n'"${skipped}"
+            fi
+          }
+
+          on_conflict() {
+            local detail="$1"
+            echo "::error::上游同步發生合併衝突，已停止，沒有 force-push。"
+            printf '%s\n' "$detail"
+            if ! create_conflict_issue "$detail"; then
+              echo "未能建立或更新 issue。若此分叉關閉了 Issues，請到 Settings → General → Features 開啟；這次失敗仍然留在 Actions。"
+            fi
+            write_summary "合併衝突，分支未改寫" "$detail"
+            exit 1
+          }
+
+          gh api "repos/${GH_REPO}" > "${tmp}/repo.json"
+          repo_meta=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); p=d.get("parent") or {}; print("\t".join(["true" if d.get("fork") else "false", d.get("default_branch") or "", p.get("full_name") or "", p.get("default_branch") or ""]))' "${tmp}/repo.json")
+          IFS=$'\t' read -r is_fork default_branch parent parent_default <<< "${repo_meta}"
+
+          if [[ "${is_fork}" != "true" || -z "${parent}" || -z "${default_branch}" ]]; then
+            fail "這個倉庫不是分叉，或讀不到預設分支與上游。"
+          fi
+          if [[ "${parent}" != "${EXPECTED_PARENT}" ]]; then
+            fail "上游不是 ${EXPECTED_PARENT}（實際為 ${parent}），已停止。"
+          fi
+          if [[ ! "${default_branch}" =~ ^[A-Za-z0-9._/-]+$ || "${default_branch}" == *".."* ]]; then
+            fail "預設分支名稱無法安全使用，已停止。"
+          fi
+
+          # merge-upstream updates the fork branch from the parent branch of the same name.
+          upstream_branch="${default_branch}"
+          parent_owner="${parent%%/*}"
+          echo "Fork default branch: ${default_branch}"
+          echo "Upstream repository: ${parent}"
+          echo "Upstream default branch: ${parent_default}"
+          echo "Branch that will be merged: ${parent}:${upstream_branch}"
+          if [[ "${parent_default}" != "${default_branch}" ]]; then
+            echo "Upstream's own default branch is ${parent_default}; this fork default still tracks ${upstream_branch}."
+          fi
+
+          if ! gh api "repos/${parent}/branches/${upstream_branch}" --jq '.name' > "${tmp}/upstream-branch.txt" 2>"${tmp}/upstream-branch.err"; then
+            fail "上游沒有同名分支 ${parent}:${upstream_branch}。" "$(cat "${tmp}/upstream-branch.err")"
+          fi
+
+          fork_sha=$(gh api "repos/${GH_REPO}/commits/${default_branch}" --jq '.sha')
+          upstream_sha=$(gh api "repos/${parent}/commits/${upstream_branch}" --jq '.sha')
+          echo "Fork SHA: ${fork_sha}"
+          echo "Upstream SHA: ${upstream_sha}"
+
+          if ! compare_json=$(gh api "repos/${GH_REPO}/compare/${default_branch}...${parent_owner}:${upstream_branch}" 2>"${tmp}/compare.err"); then
+            fail "無法比較分叉預設分支與上游同名分支。" "$(cat "${tmp}/compare.err")"
+          fi
+          compare_meta=$(printf '%s' "${compare_json}" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status") or ""); print(d.get("ahead_by")); print(d.get("behind_by"))')
+          {
+            IFS= read -r cmp_status
+            IFS= read -r upstream_only
+            IFS= read -r fork_only
+          } <<< "${compare_meta}"
+          echo "Compare base=fork head=upstream status=${cmp_status} upstream_commits=${upstream_only} fork_commits=${fork_only}"
+
+          if [[ -z "${cmp_status}" ]]; then
+            fail "比較結果沒有 status。"
+          fi
+          if [[ "${cmp_status}" == "identical" || "${upstream_only}" == "0" ]]; then
+            echo "Already up to date."
+            write_summary "已是最新，不需要合併"
+            exit 0
+          fi
+
+          set +e
+          gh api --method POST "repos/${GH_REPO}/merge-upstream" -f "branch=${default_branch}" > "${tmp}/merge.json" 2>"${tmp}/merge.err"
+          merge_code=$?
+          set -e
+          echo "merge-upstream exit ${merge_code}"
+          cat "${tmp}/merge.json" || true
+          cat "${tmp}/merge.err" || true
+          detail=$(cat "${tmp}/merge.json" "${tmp}/merge.err" 2>/dev/null || true)
+          lower=$(printf '%s' "${detail}" | tr '[:upper:]' '[:lower:]')
+
+          if [[ "${merge_code}" -ne 0 ]]; then
+            if [[ "${lower}" == *"no new commits"* || "${lower}" == *"not behind"* || "${lower}" == *"nothing to merge"* || "${lower}" == *"already up to date"* || "${lower}" == *"already up-to-date"* ]]; then
+              echo "Upstream reports there is nothing new to merge."
+              write_summary "上游沒有新的提交"
+              exit 0
+            fi
+            if [[ "${detail}" == *"(HTTP 409)"* || "${lower}" == *"conflict"* || ( "${lower}" == *"workflow"* && ( "${lower}" == *"permission"* || "${lower}" == *"scope"* ) ) ]]; then
+              # merge-upstream did not move the branch. Retry with a merge that
+              # keeps .github/workflows, or fail if some other path conflicts.
+              sync_keeping_workflows
+            else
+              fail "merge-upstream 失敗，沒有 force-push。" "${detail}"
+            fi
+          else
+            merge_type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("merge_type") or "")' "${tmp}/merge.json")
+            merge_message=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("message") or "")' "${tmp}/merge.json")
+            echo "merge_type=${merge_type}"
+            echo "message=${merge_message}"
+          fi
+
+          after_sha=$(gh api "repos/${GH_REPO}/commits/${default_branch}" --jq '.sha')
+          anc_status=$(gh api "repos/${GH_REPO}/compare/${fork_sha}...${after_sha}" --jq '.status')
+          echo "History check for previous fork tip: ${anc_status}"
+          case "${anc_status}" in
+            ahead|identical)
+              ;;
+            *)
+              fail "同步後找不到原本的分叉提交 ${fork_sha}（compare=${anc_status}）。請人工檢查，不要 force-push。"
+              ;;
+          esac
+
+          write_summary "已合併上游（${merge_type:-unknown}）。分叉原本的提交仍在歷史裡。" "${workflow_note:-}"
+          echo "Sync finished without rewriting fork-only history."
