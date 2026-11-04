@@ -1,124 +1,77 @@
-# IfcOpenShell (繁體中文說明)
+<!-- This file was generated with the assistance of an AI coding tool. -->
 
-[Build Status](https://www.google.com/search?q=https://github.com/IfcOpenShell/IfcOpenShell/actions)
-[](https://www.gnu.org/licenses/lgpl-3.0)
+> **翻譯說明：** 這是英文 [README.md](README.md) 的繁體中文（臺灣）翻譯，說明 IfcOpenShell 是什麼、有哪些功能，以及如何安裝與使用。連結、專案名稱與徽章都維持原文，沒有改網址。譯文若與英文不一致，請以英文原文為準。
+>
+> - 英文原文：[README.md](README.md)
+> - 上游儲存庫：[IfcOpenShell/IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell)
 
-> 本儲存庫為 [IfcOpenShell/IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) 之個人分叉版本（Fork）。
+IfcOpenShell
+============
 
-**IfcOpenShell** 是一套開源的（LGPL 授權）工業基礎類別（Industry Foundation Classes, IFC）軟體庫與開放工具集。它支援開發者與使用者讀取、解析、修改以及轉換 IFC 格式的建築資訊模型（BIM）檔案。
+<p align="center">
+<img src="https://github.com/IfcOpenShell/IfcOpenShell/assets/88302/34901387-e2dd-4a0c-8e38-9ffc32a66cde">
+</p>
 
----
 
-## 核心組成模組
+IfcOpenShell 是一套開源（[LGPL]）軟體函式庫，用來處理工業基礎類別（Industry Foundation Classes，[IFC]）。[IFC2x3 TC1]、[IFC4 Add2 TC1]、IFC4x1、IFC4x2 與 [IFC4x3 Add2] 都提供完整的解析；幾何方面則完整支援 [IFC2x3 TC1] 與 [IFC4 Add2 TC1]。使用 C++ 時，可以在編譯期擴充任意 IFC schema（綱要）；使用 Python 時，則可以在執行期擴充。
 
-1. **IfcOpenShell C++ 核心庫**
-   - 基於 Open CASCADE Technology (OCCT) 幾何引擎開發。
-   - 提供高效能的 IFC 幾何運算、綱要剖析與拓撲重建。
+除了 C++ 與 Python API，IfcOpenShell 也附帶一整組工具，其中包含 IfcConvert（將 IFC 模型轉換成其他格式的應用程式）、Bonsai（Blender 附加元件，提供圖形化的 IFC 編寫平台），以及其他函式庫與命令列工具。另外也支援 BCF、IDS 等輔助標準。
 
-2. **IfcOpenShell Python (`ifcopenshell`)**
-   - 官方 Python 綁定，廣泛應用於自動化腳本、BIM 資料擷取、品質檢驗（QA/QC）與自動化管線。
-   - 內建高階 API 模組（`ifcopenshell.api`），以標準工作流程簡化實體建立、屬性集（Pset）指派與幾何賦值。
+若要進一步了解、安裝或開始使用，請看：
 
-3. **BIM / BlenderBIM Add-on**
-   - 深度整合至 3D 開源建模軟體 Blender 的原生 OpenBIM 編輯插件，支援原汁原味的 IFC 讀寫與參數化編輯。
+* [IfcOpenShell 網站](https://ifcopenshell.org)
+* [IfcOpenShell 文件](https://docs.ifcopenshell.org)
+  * [IfcOpenShell C++ 安裝](https://docs.ifcopenshell.org/ifcopenshell/installation.html)
+  * [IfcOpenShell Python 安裝](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html)
+  * [IfcOpenShell Python Hello World 教學](https://docs.ifcopenshell.org/ifcopenshell-python/hello_world.html)
+* [Bonsai 網站](https://bonsaibim.org)
+* [Bonsai 文件](https://docs.bonsaibim.org/index.html)
+  * [附加元件安裝](https://docs.bonsaibim.org/quickstart/installation.html)
+  * [瀏覽 IFC 模型](https://docs.bonsaibim.org/quickstart/explore_model.html)
 
-4. **轉換工具 (`IfcConvert`)**
-   - 獨立命令列工具，可將 IFC 檔案快速轉換為 OBJ、DAE、STP、IGS、XML、SVG 或 glTF/GLB 等常見格式。
+本專案的開發仰賴各位慷慨的捐助！
 
----
+[![Open Collective Contributors](https://img.shields.io/opencollective/all/opensourcebim?label=Sponsors&color=22ce5f)](https://opencollective.com/opensourcebim/)
 
-## 快速安裝
+內容
+----
 
-### 透過 Python (pip / conda)
+| 名稱                      | 說明                                                           | 授權             | 服務 |
+| ------------------------- | --------------------------------------------------------------------- | ------------------- | ------- |
+| [bcf](https://docs.ifcopenshell.org/bcf.html)                       | 讀寫 BCF-XML，並查詢 OpenCDE BCF-API 模組的函式庫   | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/bcf-client?label=PyPI&color=006dad)](https://pypi.org/project/bcf-client/) [![Anaconda-Server Badge](https://anaconda.org/conda-forge/bcf-client/badges/version.svg)](https://anaconda.org/conda-forge/bcf-client) |
+| [bonsai](https://docs.ifcopenshell.org/bonsai.html)                    | 在 Blender 提供圖形化、原生 IFC 編寫平台的附加元件 | GPL-3.0-or-later    | [![Official](https://img.shields.io/badge/BonsaiBIM.org-Download-70ba35)](https://bonsaibim.org/studio.html) [![GitHub Unstable](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=bonsai-*&label=GitHub-Unstable&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=bonsai&expanded=true) |
+| [bsdd](https://docs.ifcopenshell.org/bsdd.html)                      | 查詢 bSDD API 的函式庫                                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/bsdd?label=PyPI&color=006dad)](https://pypi.org/project/bsdd/) |
+| [ifc2ca](https://docs.ifcopenshell.org/ifc2ca.html)                    | 把 IFC 結構分析模型轉成 Code_Aster 的工具       | LGPL-3.0-or-later   |
+| [ifc4d](https://docs.ifcopenshell.org/ifc4d.html)                     | 在 IFC 與專案管理軟體之間轉換               | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifc4d?label=PyPI&color=006dad)](https://pypi.org/project/ifc4d/) |
+| [ifc5d](https://docs.ifcopenshell.org/ifc5d.html)                     | 從 IFC 報告並最佳化成本資訊                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifc5d?label=PyPI&color=006dad)](https://pypi.org/project/ifc5d/) |
+| ifcblender                | 早期的 Blender IFC 匯入附加元件                                    | LGPL-3.0-or-later\* |
+| [ifccityjson](https://docs.ifcopenshell.org/ifccityjson.html)               | 把 CityJSON 轉成 IFC                                               | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifccityjson?label=PyPI&color=006dad)](https://pypi.org/project/ifccityjson/) |
+| [ifcclash](https://docs.ifcopenshell.org/ifcclash.html)                  | 碰撞檢查函式庫與命令列工具                                   | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcclash?label=PyPI&color=006dad)](https://pypi.org/project/ifcclash/) |
+| [ifcconvert](https://docs.ifcopenshell.org/ifcconvert.html)                | 把 IFC 轉成多種格式的命令列工具                          | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcconvert/installation.html) [![GitHub](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcconvert-*&label=GitHub&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcconvert&expanded=true)
+| [ifccsv](https://docs.ifcopenshell.org/ifccsv.html)                    | 從 IFC 匯出與匯入明細表的函式庫與命令列工具           | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifccsv?label=PyPI&color=006dad)](https://pypi.org/project/ifccsv/) |
+| [ifcdiff](https://docs.ifcopenshell.org/ifcdiff.html)                   | 比較 IFC 模型之間的變更                                    | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcdiff?label=PyPI&color=006dad)](https://pypi.org/project/ifcdiff/) |
+| [ifcedit](https://docs.ifcopenshell.org/ifcedit.html)                   | 把 ifcopenshell.api 的模型修改函式包成命令列工具         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcedit?label=PyPI&color=006dad)](https://pypi.org/project/ifcedit/) |
+| [ifcfm](https://docs.ifcopenshell.org/ifcfm.html)                     | 依設施管理（FM）移交需求擷取 IFC 資料                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcfm?label=PyPI&color=006dad)](https://pypi.org/project/ifcfm/) |
+| [ifcmax](https://docs.ifcopenshell.org/ifcmax.html)                    | 早期讓 3DS Max 支援 IFC 的擴充功能                         | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcmax.html)
+| [ifcmcp](https://docs.ifcopenshell.org/ifcmcp.html)                    | 查詢與編輯 IFC 建築模型的 MCP 伺服器               | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcopenshell-mcp?label=PyPI&color=006dad)](https://pypi.org/project/ifcopenshell-mcp/) |
+| [ifcopenshell-python](https://docs.ifcopenshell.org/ifcopenshell-python.html)       | 用來操作 IFC 的 Python 函式庫                                   | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html) [![GitHub](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcopenshell-python-*&label=GitHub&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcopenshell-python&expanded=true) [![PyPI](https://img.shields.io/pypi/v/ifcopenshell?label=PyPI&color=006dad)](https://pypi.org/project/ifcopenshell/) [![Anaconda](https://img.shields.io/conda/vn/conda-forge/ifcopenshell?label=Anaconda&color=43b02a)](https://anaconda.org/conda-forge/ifcopenshell) [![Anaconda](https://img.shields.io/conda/vn/ifcopenshell/ifcopenshell?label=Anaconda-Unstable&color=43b02a)](https://anaconda.org/ifcopenshell/ifcopenshell) [![Docker](https://img.shields.io/docker/pulls/aecgeeks/ifcopenshell?label=Docker&color=1D63ED)](https://hub.docker.com/r/aecgeeks/ifcopenshell) [![AUR](https://img.shields.io/aur/version/ifcopenshell?label=AUR&color=1793d1)](https://aur.archlinux.org/packages/ifcopenshell) [![AUR Unstable](https://img.shields.io/aur/version/ifcopenshell-git?label=AUR-Unstable&color=1793d1)](https://aur.archlinux.org/packages/ifcopenshell-git) [![Pyodide WASM Wheels tag](https://img.shields.io/github/v/tag/ifcopenshell/wasm-wheels?sort=semver&label=pyodide-wasm-wheels)](https://github.com/IfcOpenShell/wasm-wheels) |
+| [ifcpatch](https://docs.ifcopenshell.org/ifcpatch.html)                  | 用來執行現成腳本、修改 IFC 的工具                | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcpatch?label=PyPI&color=006dad)](https://pypi.org/project/ifcpatch/) |
+| [ifcquery](https://docs.ifcopenshell.org/ifcquery.html)                  | 查詢與檢視 IFC 建築模型的命令列工具              | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcquery?label=PyPI&color=006dad)](https://pypi.org/project/ifcquery/) |
+| [ifcsverchok](https://docs.ifcopenshell.org/ifcsverchok.html)               | 用視覺化節點做 IFC 程式設計的 Blender 附加元件                   | GPL-3.0-or-later    | [![GitHub](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcsverchok-*.*.*&label=GitHub&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcsverchok&expanded=true)
+| [ifctester](https://docs.ifcopenshell.org/ifctester.html)                 | 以 IDS 審核模型的函式庫、命令列工具與網頁應用                        | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifctester?label=PyPI&color=006dad)](https://pypi.org/project/ifctester/) |
 
-最快速取得 Python 函式庫的方式：
+IfcOpenShell 的 C++ 程式碼拆成多個內部函式庫：
 
-```bash
-# 使用 pip 安裝預編譯套件
-pip install ifcopenshell
-```
+| 名稱                      | 說明                                                           | 授權             |
+| ------------------------- | --------------------------------------------------------------------- | ------------------- |
+| ifcgeom                   | IfcOpenShell 的內部函式庫                                     | LGPL-3.0-or-later\* |
+| ifcgeomserver             | IfcOpenShell 的內部函式庫                                     | LGPL-3.0-or-later\* |
+| ifcparse                  | IfcOpenShell 的內部函式庫                                     | LGPL-3.0-or-later\* |
+| ifcwrap                   | IfcOpenShell 的內部函式庫                                     | LGPL-3.0-or-later\* |
+| serializers               | IfcOpenShell 的內部函式庫                                     | LGPL-3.0-or-later\* |
 
-或使用 Conda：
-
-```bash
-conda install -c conda-forge ifcopenshell
-```
-
-### 下載命令列工具 (IfcConvert)
-
-預編譯的二進位執行檔（Windows / macOS / Linux）可直接至官方發布頁取得：
-
-- [IfcOpenShell Releases](https://github.com/IfcOpenShell/IfcOpenShell/releases)
-
----
-
-## Python 快速上手範例
-
-### 1. 讀取 IFC 檔案與查詢元素
-
-```python
-import ifcopenshell
-
-# 開啟 IFC 檔案
-model = ifcopenshell.open("model.ifc")
-
-# 取得架構版本 (例如 IFC2X3 或 IFC4)
-print(f"IFC 綱要版本: {model.schema}")
-
-# 搜尋模型中的所有牆體 (IfcWall)
-walls = model.by_type("IfcWall")
-print(f"牆體總數: {len(walls)}")
-
-for wall in walls:
-    print(f"名稱: {wall.Name}, 全域唯一識別碼 (GUID): {wall.GlobalId}")
-```
-
-### 2. 使用 IfcOpenShell API 建立基礎專案與幾何
-
-```python
-import ifcopenshell
-import ifcopenshell.api
-
-# 建立空白 IFC4 模型
-model = ifcopenshell.api.run("project.create_file", version="IFC4")
-
-# 初始化專案與基本度量單位
-project = ifcopenshell.api.run("root.create_entity", model, ifc_class="IfcProject", name="My Project")
-ifcopenshell.api.run("unit.assign_unit", model, length={"is_metric": True, "raw": "MILLIMETERS"})
-
-# 儲存檔案
-model.write("output.ifc")
-```
-
----
-
-## 本地建置與編譯 (Build from Source)
-
-IfcOpenShell 依賴 CMake 與多個第三方庫（如 Open CASCADE、Boost、HDF5、Eigen 等）。推薦使用官方提供的自動化建置腳本：
-
-```bash
-# 複製專案
-git clone https://github.com/chydesignstudio-Henry/IfcOpenShell.git
-cd IfcOpenShell
-
-# 執行自動化建置腳本 (以 Linux / macOS 為例)
-cd cmake
-python3 build-all.py
-```
-
-*詳細建置參數與 Windows Visual Studio 支援說明請參閱 `cmake/` 目錄下之官方指南。*
-
----
-
-## 相關連結與資源
-
-- **官方首頁**：[ifcopenshell.org](https://ifcopenshell.org/)
-- **官方文檔**：[docs.ifcopenshell.org](https://docs.ifcopenshell.org/)
-- **社群討論區 / OSArch**：[community.osarch.org](https://community.osarch.org/)
-- **上游主儲存庫**：[IfcOpenShell/IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell)
-
----
-
-## 授權條款
-
-IfcOpenShell 採用 **GNU Lesser General Public License (LGPL) v3.0** 授權條款，完整條款請見儲存庫內的 LICENSE 檔案。
+[LGPL]: https://github.com/IfcOpenShell/IfcOpenShell/tree/master/COPYING.LESSER "LGPL-3.0-or-later"
+[IFC]: https://technical.buildingsmart.org/standards/ifc/ "IFC"
+[IFC2x3 TC1]: https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/TC1/HTML/ "IFC2x3 TC1"
+[IFC4 Add2 TC1]: https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/ "IFC4 Add2 TC1"
+[IFC4x3 Add2]: https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/ "IFC4x3 Add2"
